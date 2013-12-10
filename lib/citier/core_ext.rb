@@ -34,22 +34,12 @@ class ActiveRecord::Base
   end
 end
 
-<<<<<<< HEAD
 def create_citier_view(theclass)  #function for creating views for migrations 
-  
   return unless theclass.acts_as_citier? #Security in case we call this on a non-citier model
-  
-  # flush any column info in memory
-  # Loops through and stops once we've cleaned up to our root class.
-  reset_class = theclass
-  
-=======
-def create_citier_view(theclass)  #function for creating views for migrations
   # flush any column info in memory
   # Loops through and stops once we've cleaned up to our root class.
   # We MUST user Writable as that is the place where changes might reside!
-  reset_class = theclass::Writable
->>>>>>> ph/master
+  reset_class = theclass
   until reset_class == ActiveRecord::Base
     citier_debug("Resetting column information on #{reset_class}")
     reset_class.reset_column_information
