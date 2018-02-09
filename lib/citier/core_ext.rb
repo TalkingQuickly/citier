@@ -34,7 +34,7 @@ class ActiveRecord::Base
   end
 end
 
-def create_citier_view(theclass)  #function for creating views for migrations 
+def create_citier_view(theclass)  #function for creating views for migrations
   return unless theclass.acts_as_citier? #Security in case we call this on a non-citier model
   # flush any column info in memory
   # Loops through and stops once we've cleaned up to our root class.
@@ -51,7 +51,7 @@ def create_citier_view(theclass)  #function for creating views for migrations
   theclass::Writable.reset_column_information
   #May not need to reset info on the superclass as it could have been covered above but worth doing. Won't harm hey?
   theclass.superclass.reset_column_information
-  
+
   self_columns = theclass::Writable.column_names.select{ |c| c != "id" }
   parent_columns = theclass.superclass.column_names.select{ |c| c != "id" }
   columns = parent_columns+self_columns
@@ -113,20 +113,28 @@ end
 
 # Used if you update the root model and want to update all subsequent views.
 def update_all_citier_views_for_root_class(klass)
-  
+
   # The condition for delete_if checks for...
   #We're only interested in classes which are in our acting class :)
   #Don't include our main class as there is no view
   #Delete anything that isn't a descendent of our class
-   citier_classes = Dir['app/models/*.rb'].map {|f| File.basename(f, '.*').camelize.constantize }.delete_if do |the_class| 
-     !the_class.respond_to?(:acts_as_citier?) || !the_class.acts_as_citier? || the_class == klass || the_class.base_class != klass  
+   citier_classes = Dir['app/models/*.rb'].map {|f| File.basename(f, '.*').camelize }.delete_if do |the_class|
+    begin
+      the_class = the_class.constantize
+      !the_class.respond_to?(:acts_as_citier?) || !the_class.acts_as_citier? || the_class == klass || the_class.base_class != klass
+    rescue ActiveRecord::StatementInvalid => e
+      puts "Table didn't exist in migration, continuing"
+      true
+    end
    end
-   
+
+   citier_classes = citier_classes.map {|f| f.constantize }
+
    #citier_debug("Updated ALL #{citier_classes}")
    #debugger
    #Now update all the relevent views
    citier_classes.each do |citier_class|
      update_citier_view(citier_class)
    end
-   
+
 end
